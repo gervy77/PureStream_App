@@ -1,0 +1,157 @@
+<div class="search-container">
+  <!-- Search Header -->
+  <div class="search-header">
+    <div class="search-input-container">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery"
+        (input)="onSearchInput()"
+        placeholder="Rechercher des chansons, artistes, albums..."
+        class="search-input"
+      >
+      <button 
+        *ngIf="searchQuery" 
+        (click)="searchQuery = ''; onSearchInput()" 
+        class="clear-search-btn"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section" *ngIf="genres.length > 0">
+    <div class="filters-header">
+      <h3>Filtres</h3>
+      <button 
+        *ngIf="selectedGenre" 
+        (click)="clearFilters()" 
+        class="clear-filters-btn"
+      >
+        Effacer les filtres
+      </button>
+    </div>
+    <div class="genre-filters">
+      <button 
+        *ngFor="let genre of genres" 
+        (click)="filterByGenre(genre)"
+        [class.active]="selectedGenre === genre"
+        class="genre-filter-btn"
+      >
+        {{ genre }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Search Results -->
+  <div class="search-results" *ngIf="searchQuery">
+    <div class="results-header">
+      <h2>Résultats de recherche</h2>
+      <p *ngIf="totalResults > 0">{{ totalResults }} résultat(s) trouvé(s)</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading && searchResults.length === 0">
+      <div class="loading-spinner"></div>
+      <p>Recherche en cours...</p>
+    </div>
+
+    <!-- No Results -->
+    <div class="no-results" *ngIf="!isLoading && searchResults.length === 0 && searchQuery">
+      <div class="no-results-icon">🎵</div>
+      <h3>Aucun résultat trouvé</h3>
+      <p>Essayez avec d'autres mots-clés ou vérifiez l'orthographe.</p>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="results-grid" *ngIf="searchResults.length > 0">
+      <div 
+        *ngFor="let song of searchResults" 
+        class="song-card"
+        (click)="playSong(song)"
+      >
+        <div class="song-cover-container">
+          <img 
+            [src]="assetService.getSongCover(song.coverImage)" 
+            [alt]="song.title"
+            class="song-cover"
+          >
+          <div class="play-overlay">
+            <span class="play-icon">▶️</span>
+          </div>
+          <div class="song-actions">
+            <button 
+              class="action-btn favorite-btn" 
+              (click)="toggleFavorite(song, $event)"
+              [class.favorited]="isFavorite(song._id || '')"
+              title="Ajouter aux favoris"
+            >
+              <span class="action-icon">{{ isFavorite(song._id || '') ? '❤️' : '🤍' }}</span>
+            </button>
+            <div class="playlist-dropdown" *ngIf="playlists.length > 0">
+              <button class="action-btn playlist-btn" title="Ajouter à une playlist">
+                <span class="action-icon">📝</span>
+              </button>
+              <div class="playlist-menu">
+                <div class="playlist-menu-header">
+                  <span>Ajouter à une playlist</span>
+                </div>
+                <div 
+                  *ngFor="let playlist of playlists" 
+                  class="playlist-option"
+                  (click)="addToPlaylist(song, playlist._id, $event)"
+                >
+                  <span class="playlist-icon">📝</span>
+                  <span class="playlist-name">{{ playlist.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="song-info">
+          <h3 class="song-title">{{ song.title }}</h3>
+          <p class="song-artist">{{ song.artist }}</p>
+          <p class="song-album" *ngIf="song.album">{{ song.album }}</p>
+          <div class="song-stats">
+            <span class="duration" *ngIf="song.duration">⏱️ {{ formatDuration(song.duration) }}</span>
+            <span class="play-count">👁️ {{ song.playCount || 0 }}</span>
+            <span class="likes">❤️ {{ song.likes || 0 }}</span>
+          </div>
+          <p class="upload-date" *ngIf="song.createdAt">📅 {{ formatDate(song.createdAt) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load More Button -->
+    <div class="load-more-container" *ngIf="hasMoreResults && searchResults.length > 0">
+      <button 
+        (click)="loadMoreResults()" 
+        [disabled]="isLoading"
+        class="load-more-btn"
+      >
+        <span *ngIf="!isLoading">Charger plus de résultats</span>
+        <span *ngIf="isLoading">Chargement...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!searchQuery">
+    <div class="empty-state-icon">🔍</div>
+    <h2>Recherchez votre musique</h2>
+    <p>Tapez le nom d'une chanson, d'un artiste ou d'un album pour commencer votre recherche.</p>
+    <div class="search-suggestions">
+      <h3>Suggestions de recherche :</h3>
+      <div class="suggestion-tags">
+        <button 
+          *ngFor="let genre of genres.slice(0, 6)" 
+          (click)="searchQuery = genre; onSearchInput()"
+          class="suggestion-tag"
+        >
+          {{ genre }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div> 

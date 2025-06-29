@@ -1,0 +1,158 @@
+<div class="library-container">
+  <div class="library-header">
+    <h1>📚 Ma Bibliothèque</h1>
+    <p>Vos chansons favorites et playlists personnelles</p>
+  </div>
+
+  <!-- Authentication Check -->
+  <div class="auth-required" *ngIf="!authService.isAuthenticated()">
+    <div class="auth-message">
+      <div class="auth-icon">🔒</div>
+      <h2>Connexion requise</h2>
+      <p>Connectez-vous pour accéder à votre bibliothèque personnelle</p>
+      <button (click)="authService.login({ email: '', password: '' })" class="login-btn">
+        Se connecter
+      </button>
+    </div>
+  </div>
+
+  <!-- Library Content -->
+  <div class="library-content" *ngIf="authService.isAuthenticated()">
+    <!-- Tabs -->
+    <div class="library-tabs">
+      <button 
+        (click)="setActiveTab('favorites')"
+        [class.active]="activeTab === 'favorites'"
+        class="tab-btn"
+      >
+        <span class="tab-icon">❤️</span>
+        Favoris ({{ favorites.length }})
+      </button>
+      <button 
+        (click)="setActiveTab('playlists')"
+        [class.active]="activeTab === 'playlists'"
+        class="tab-btn"
+      >
+        <span class="tab-icon">📝</span>
+        Playlists ({{ playlists.length }})
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Chargement de votre bibliothèque...</p>
+    </div>
+
+    <!-- Favorites Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'favorites' && !isLoading">
+      <div class="content-header">
+        <h2>❤️ Mes Favoris</h2>
+        <p *ngIf="favorites.length > 0">{{ favorites.length }} chanson(s) dans vos favoris</p>
+      </div>
+
+      <!-- Empty Favorites -->
+      <div class="empty-state" *ngIf="favorites.length === 0">
+        <div class="empty-icon">❤️</div>
+        <h3>Aucun favori</h3>
+        <p>Vous n'avez pas encore ajouté de chansons à vos favoris.</p>
+        <p>Explorez la musique et ajoutez vos titres préférés !</p>
+      </div>
+
+      <!-- Favorites Grid -->
+      <div class="songs-grid" *ngIf="favorites.length > 0">
+        <div 
+          *ngFor="let song of favorites" 
+          class="song-card"
+          (click)="playSong(song)"
+        >
+          <div class="song-cover-container">
+            <img 
+              [src]="assetService.getSongCover(song.coverImage)" 
+              [alt]="song.title"
+              class="song-cover"
+            >
+            <div class="play-overlay">
+              <span class="play-icon">▶️</span>
+            </div>
+            <div class="song-actions">
+              <button 
+                class="action-btn favorite-btn favorited" 
+                (click)="removeFromFavorites(song, $event)"
+                title="Retirer des favoris"
+              >
+                <span class="action-icon">❤️</span>
+              </button>
+            </div>
+          </div>
+          <div class="song-info">
+            <h3 class="song-title">{{ song.title }}</h3>
+            <p class="song-artist">{{ song.artist }}</p>
+            <p class="song-album" *ngIf="song.album">{{ song.album }}</p>
+            <div class="song-stats">
+              <span class="duration" *ngIf="song.duration">⏱️ {{ formatDuration(song.duration) }}</span>
+              <span class="play-count">👁️ {{ song.playCount || 0 }}</span>
+              <span class="likes">❤️ {{ song.likes || 0 }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Playlists Tab -->
+    <div class="tab-content" *ngIf="activeTab === 'playlists' && !isLoading">
+      <div class="content-header">
+        <h2>📝 Mes Playlists</h2>
+        <p *ngIf="playlists.length > 0">{{ playlists.length }} playlist(s) créée(s)</p>
+      </div>
+
+      <!-- Empty Playlists -->
+      <div class="empty-state" *ngIf="playlists.length === 0">
+        <div class="empty-icon">📝</div>
+        <h3>Aucune playlist</h3>
+        <p>Vous n'avez pas encore créé de playlist.</p>
+        <p>Créez votre première playlist pour organiser votre musique !</p>
+      </div>
+
+      <!-- Playlists Grid -->
+      <div class="playlists-grid" *ngIf="playlists.length > 0">
+        <div 
+          *ngFor="let playlist of playlists" 
+          class="playlist-card"
+          (click)="playPlaylist(playlist)"
+        >
+          <div class="playlist-cover-container">
+            <img 
+              [src]="playlist.coverImage || 'assets/default-playlist.png'" 
+              [alt]="playlist.name"
+              class="playlist-cover"
+            >
+            <div class="play-overlay">
+              <span class="play-icon">▶️</span>
+            </div>
+            <div class="playlist-actions">
+              <button 
+                class="action-btn delete-btn" 
+                (click)="deletePlaylist(playlist, $event)"
+                title="Supprimer la playlist"
+              >
+                <span class="action-icon">🗑️</span>
+              </button>
+            </div>
+          </div>
+          <div class="playlist-info">
+            <h3 class="playlist-name">{{ playlist.name }}</h3>
+            <p class="playlist-description" *ngIf="playlist.description">{{ playlist.description }}</p>
+            <div class="playlist-stats">
+              <span class="song-count">🎵 {{ playlist.songs && playlist.songs.length || 0 }} chanson(s)</span>
+              <span class="duration" *ngIf="getPlaylistDuration(playlist) > 0">
+                ⏱️ {{ formatPlaylistDuration(playlist) }}
+              </span>
+            </div>
+            <p class="playlist-date" *ngIf="playlist.createdAt">📅 {{ formatDate(playlist.createdAt) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

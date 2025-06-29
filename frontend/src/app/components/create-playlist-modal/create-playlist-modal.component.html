@@ -1,0 +1,49 @@
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Créer une nouvelle playlist</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+    <form (ngSubmit)="createPlaylist()" class="modal-form">
+      <div class="form-group">
+        <label for="name">Nom de la playlist *</label>
+        <input 
+          type="text" 
+          id="name" 
+          [(ngModel)]="playlistName" 
+          name="name" 
+          required 
+          placeholder="Ma nouvelle playlist"
+          class="form-input"
+        >
+      </div>
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea 
+          id="description" 
+          [(ngModel)]="playlistDescription" 
+          name="description" 
+          placeholder="Décrivez votre playlist..."
+          class="form-textarea"
+          rows="3"
+        ></textarea>
+      </div>
+      <div class="form-group">
+        <label>
+          <input 
+            type="checkbox" 
+            [(ngModel)]="isPrivate" 
+            name="isPrivate"
+          >
+          Playlist privée
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="!playlistName.trim()">
+          Créer la playlist
+        </button>
+      </div>
+    </form>
+  </div>
+</div> 

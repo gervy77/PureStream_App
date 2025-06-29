@@ -1,0 +1,214 @@
+<div class="upload-container">
+  <div class="upload-header">
+    <h1>📤 Upload de Musique</h1>
+    <p>Partagez votre musique avec la communauté PureStream</p>
+  </div>
+
+  <div class="upload-content">
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <h2>Fichier Audio</h2>
+      
+      <!-- Audio File Upload -->
+      <div 
+        class="file-upload-area"
+        [class.drag-over]="isDragOver"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <div class="upload-icon">🎵</div>
+        <h3>Glissez-déposez votre fichier audio ici</h3>
+        <p>ou</p>
+        <label for="audioFile" class="file-input-label">
+          Sélectionner un fichier
+          <input 
+            type="file" 
+            id="audioFile"
+            accept="audio/*"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          >
+        </label>
+        <p class="file-info">
+          Formats supportés : MP3, WAV, FLAC, AAC, M4A<br>
+          Taille maximale : 50MB
+        </p>
+      </div>
+
+      <!-- Audio File Preview -->
+      <div class="file-preview" *ngIf="audioFile">
+        <div class="preview-header">
+          <h4>Fichier sélectionné</h4>
+          <button (click)="removeAudioFile()" class="remove-btn">✕</button>
+        </div>
+        <div class="preview-content">
+          <div class="audio-info">
+            <span class="file-name">{{ audioFile.name }}</span>
+            <span class="file-size">{{ formatFileSize(audioFile.size) }}</span>
+          </div>
+          <audio *ngIf="previewUrl" [src]="previewUrl" controls class="audio-preview"></audio>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cover Image Upload -->
+    <div class="upload-section">
+      <h2>Image de Couverture (Optionnel)</h2>
+      
+      <div class="cover-upload-area">
+        <div class="cover-preview" *ngIf="coverPreviewUrl; else coverUpload">
+          <img [src]="coverPreviewUrl" alt="Cover preview" class="cover-image">
+          <button (click)="removeCoverImage()" class="remove-cover-btn">✕</button>
+        </div>
+        <ng-template #coverUpload>
+          <div class="cover-upload-placeholder">
+            <div class="upload-icon">🖼️</div>
+            <p>Ajouter une image de couverture</p>
+            <label for="coverImage" class="file-input-label">
+              Sélectionner une image
+              <input 
+                type="file" 
+                id="coverImage"
+                accept="image/*"
+                (change)="onCoverSelected($event)"
+                class="file-input"
+              >
+            </label>
+            <p class="file-info">
+              Formats supportés : JPG, PNG, GIF<br>
+              Taille maximale : 5MB
+            </p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Metadata Form -->
+    <div class="upload-section">
+      <h2>Informations de la Chanson</h2>
+      
+      <form class="metadata-form" (ngSubmit)="uploadSong()">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="title">Titre *</label>
+            <input 
+              type="text" 
+              id="title"
+              [(ngModel)]="songMetadata.title"
+              name="title"
+              required
+              class="form-input"
+              placeholder="Titre de la chanson"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="artist">Artiste *</label>
+            <input 
+              type="text" 
+              id="artist"
+              [(ngModel)]="songMetadata.artist"
+              name="artist"
+              required
+              class="form-input"
+              placeholder="Nom de l'artiste"
+            >
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="album">Album</label>
+            <input 
+              type="text" 
+              id="album"
+              [(ngModel)]="songMetadata.album"
+              name="album"
+              class="form-input"
+              placeholder="Nom de l'album"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="genre">Genre</label>
+            <select 
+              id="genre"
+              [(ngModel)]="songMetadata.genre"
+              name="genre"
+              class="form-input"
+            >
+              <option value="">Sélectionner un genre</option>
+              <option *ngFor="let genre of genres" [value]="genre">
+                {{ genre }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div class="upload-progress" *ngIf="isUploading">
+          <div class="progress-header">
+            <span>Upload en cours...</span>
+            <span>{{ uploadProgress }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+          </div>
+        </div>
+
+        <!-- Upload Button -->
+        <div class="form-actions">
+          <button 
+            type="submit" 
+            [disabled]="!audioFile || !songMetadata.title.trim() || !songMetadata.artist.trim() || isUploading"
+            class="upload-btn"
+          >
+            <span *ngIf="!isUploading">📤 Uploader la Chanson</span>
+            <span *ngIf="isUploading">⏳ Upload en cours...</span>
+          </button>
+          
+          <button 
+            type="button" 
+            (click)="resetForm()"
+            class="reset-btn"
+            [disabled]="isUploading"
+          >
+            🔄 Réinitialiser
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Upload Guidelines -->
+  <div class="upload-guidelines">
+    <h3>📋 Directives d'Upload</h3>
+    <div class="guidelines-content">
+      <div class="guideline-item">
+        <span class="guideline-icon">✅</span>
+        <div class="guideline-text">
+          <strong>Contenu autorisé :</strong> Votre propre musique, musique libre de droits, ou musique avec autorisation
+        </div>
+      </div>
+      <div class="guideline-item">
+        <span class="guideline-icon">❌</span>
+        <div class="guideline-text">
+          <strong>Contenu interdit :</strong> Musique protégée par des droits d'auteur sans autorisation
+        </div>
+      </div>
+      <div class="guideline-item">
+        <span class="guideline-icon">⚠️</span>
+        <div class="guideline-text">
+          <strong>Qualité :</strong> Utilisez des fichiers de bonne qualité (minimum 128kbps pour MP3)
+        </div>
+      </div>
+      <div class="guideline-item">
+        <span class="guideline-icon">📝</span>
+        <div class="guideline-text">
+          <strong>Métadonnées :</strong> Remplissez correctement les informations pour faciliter la découverte
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

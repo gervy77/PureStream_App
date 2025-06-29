@@ -1,0 +1,252 @@
+<div class="playlists-container">
+  <div class="playlists-header">
+    <h1>📝 Gestion des Playlists</h1>
+    <p>Créez et gérez vos playlists personnelles</p>
+  </div>
+
+  <!-- Authentication Check -->
+  <div class="auth-required" *ngIf="!authService.isAuthenticated()">
+    <div class="auth-message">
+      <div class="auth-icon">🔒</div>
+      <h2>Connexion requise</h2>
+      <p>Connectez-vous pour créer et gérer vos playlists</p>
+      <button (click)="authService.login({ email: '', password: '' })" class="login-btn">
+        Se connecter
+      </button>
+    </div>
+  </div>
+
+  <!-- Playlists Content -->
+  <div class="playlists-content" *ngIf="authService.isAuthenticated()">
+    <!-- Header Actions -->
+    <div class="playlists-actions">
+      <button (click)="openCreateModal()" class="create-playlist-btn">
+        <span class="btn-icon">➕</span>
+        Créer une Playlist
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="loading-spinner"></div>
+      <p>Chargement de vos playlists...</p>
+    </div>
+
+    <!-- Playlists Grid -->
+    <div class="playlists-grid" *ngIf="!isLoading && playlists.length > 0">
+      <div 
+        *ngFor="let playlist of playlists" 
+        class="playlist-card"
+        [class.selected]="selectedPlaylist?._id === playlist._id"
+        (click)="selectPlaylist(playlist)"
+      >
+        <div class="playlist-cover-container">
+          <img 
+            [src]="assetService.getPlaylistImage(playlist.coverImage)" 
+            [alt]="playlist.name"
+            class="playlist-cover"
+          >
+          <div class="play-overlay">
+            <span class="play-icon">▶️</span>
+          </div>
+          <div class="playlist-actions">
+            <button 
+              class="action-btn play-btn" 
+              (click)="playPlaylist(playlist); $event.stopPropagation()"
+              title="Jouer la playlist"
+            >
+              <span class="action-icon">▶️</span>
+            </button>
+            <button 
+              class="action-btn edit-btn" 
+              (click)="updatePlaylist(playlist); $event.stopPropagation()"
+              title="Modifier la playlist"
+            >
+              <span class="action-icon">✏️</span>
+            </button>
+            <button 
+              class="action-btn delete-btn" 
+              (click)="deletePlaylist(playlist); $event.stopPropagation()"
+              title="Supprimer la playlist"
+            >
+              <span class="action-icon">🗑️</span>
+            </button>
+          </div>
+        </div>
+        <div class="playlist-info">
+          <h3 class="playlist-name">{{ playlist.name }}</h3>
+          <p class="playlist-description" *ngIf="playlist.description">{{ playlist.description }}</p>
+          <div class="playlist-stats">
+            <span class="song-count">🎵 {{ playlist.songs && playlist.songs.length || 0 }} chanson(s)</span>
+            <span class="duration" *ngIf="getPlaylistDuration(playlist) > 0">
+              ⏱️ {{ formatPlaylistDuration(playlist) }}
+            </span>
+          </div>
+          <div class="playlist-meta">
+            <span class="visibility" [class.public]="playlist.isPublic" [class.private]="!playlist.isPublic">
+              {{ playlist.isPublic ? '🌍 Public' : '🔒 Privé' }}
+            </span>
+            <span class="created-date" *ngIf="playlist.createdAt">📅 {{ formatDate(playlist.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && playlists.length === 0">
+      <div class="empty-icon">📝</div>
+      <h3>Aucune playlist</h3>
+      <p>Vous n'avez pas encore créé de playlist.</p>
+      <button (click)="openCreateModal()" class="create-first-playlist-btn">
+        Créer ma première playlist
+      </button>
+    </div>
+
+    <!-- Selected Playlist Details -->
+    <div class="playlist-details" *ngIf="selectedPlaylist">
+      <div class="details-header">
+        <h2>{{ selectedPlaylist.name }}</h2>
+        <div class="details-actions">
+          <button (click)="playPlaylist(selectedPlaylist)" class="play-all-btn">
+            <span class="btn-icon">▶️</span>
+            Tout jouer
+          </button>
+          <button (click)="openAddSongModal()" class="add-song-btn">
+            <span class="btn-icon">➕</span>
+            Ajouter des chansons
+          </button>
+        </div>
+      </div>
+
+      <div class="playlist-description" *ngIf="selectedPlaylist.description">
+        <p>{{ selectedPlaylist.description }}</p>
+      </div>
+
+      <!-- Songs List -->
+      <div class="songs-list" *ngIf="selectedPlaylist.songs && selectedPlaylist.songs.length > 0">
+        <h3>Chansons ({{ selectedPlaylist.songs.length }})</h3>
+        <div class="song-item" *ngFor="let playlistSong of selectedPlaylist.songs; let i = index">
+          <div class="song-number">{{ i + 1 }}</div>
+          <div class="song-cover">
+            <img 
+              [src]="assetService.getSongCover(playlistSong.song.coverImage)" 
+              [alt]="playlistSong.song.title"
+            >
+          </div>
+          <div class="song-details">
+            <h4 class="song-title">{{ playlistSong.song.title }}</h4>
+            <p class="song-artist">{{ playlistSong.song.artist }}</p>
+            <p class="song-album" *ngIf="playlistSong.song.album">{{ playlistSong.song.album }}</p>
+          </div>
+          <div class="song-duration" *ngIf="playlistSong.song.duration">
+            {{ formatDuration(playlistSong.song.duration) }}
+          </div>
+          <div class="song-actions">
+            <button 
+              (click)="playSong(playlistSong.song)" 
+              class="play-song-btn"
+              title="Jouer cette chanson"
+            >
+              ▶️
+            </button>
+            <button 
+              (click)="removeSongFromPlaylist(selectedPlaylist, playlistSong.song, $event)" 
+              class="remove-song-btn"
+              title="Retirer de la playlist"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty Songs -->
+      <div class="empty-songs" *ngIf="!selectedPlaylist.songs || selectedPlaylist.songs.length === 0">
+        <div class="empty-songs-icon">🎵</div>
+        <h3>Aucune chanson</h3>
+        <p>Cette playlist ne contient pas encore de chansons.</p>
+        <button (click)="openAddSongModal()" class="add-first-song-btn">
+          Ajouter des chansons
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Playlist Modal -->
+  <div class="modal-overlay" *ngIf="showCreateModal" (click)="closeCreateModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Créer une nouvelle playlist</h2>
+        <button (click)="closeCreateModal()" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="createPlaylist()" class="create-playlist-form">
+          <div class="form-group">
+            <label for="playlistName">Nom de la playlist *</label>
+            <input 
+              type="text" 
+              id="playlistName"
+              [(ngModel)]="newPlaylist.name"
+              name="name"
+              required
+              class="form-input"
+              placeholder="Nom de votre playlist"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="playlistDescription">Description</label>
+            <textarea 
+              id="playlistDescription"
+              [(ngModel)]="newPlaylist.description"
+              name="description"
+              class="form-input"
+              placeholder="Description de votre playlist (optionnel)"
+              rows="3"
+            ></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                [(ngModel)]="newPlaylist.isPublic"
+                name="isPublic"
+                class="checkbox-input"
+              >
+              <span class="checkbox-text">Rendre cette playlist publique</span>
+            </label>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" (click)="closeCreateModal()" class="cancel-btn">
+              Annuler
+            </button>
+            <button type="submit" class="create-btn" [disabled]="!newPlaylist.name.trim()">
+              Créer la playlist
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Song Modal -->
+  <div class="modal-overlay" *ngIf="showAddSongModal" (click)="closeAddSongModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Ajouter des chansons à "{{ selectedPlaylist?.name }}"</h2>
+        <button (click)="closeAddSongModal()" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Fonctionnalité en cours de développement...</p>
+        <p>Vous pourrez bientôt rechercher et ajouter des chansons à vos playlists.</p>
+        <div class="modal-actions">
+          <button (click)="closeAddSongModal()" class="close-modal-btn">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

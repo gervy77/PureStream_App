@@ -1,0 +1,142 @@
+<div class="home-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Bienvenue sur PureStream</h1>
+      <p class="hero-subtitle">Découvrez votre musique préférée avec notre plateforme de streaming local</p>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ totalSongs }}</span>
+          <span class="stat-label">Chansons</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ totalPlaylists }}</span>
+          <span class="stat-label">Playlists</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ totalUsers }}</span>
+          <span class="stat-label">Utilisateurs</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Popular Songs -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">🎵 Chansons Populaires</h2>
+      <p class="section-subtitle">Les titres les plus écoutés en ce moment</p>
+    </div>
+    <div class="songs-grid" *ngIf="popularSongs.length > 0; else loadingSongs">
+      <div 
+        *ngFor="let song of popularSongs" 
+        class="song-card"
+        (click)="playSong(song)"
+      >
+        <div class="song-cover-container">
+          <img 
+            [src]="assetService.getSongCover(song.coverImage)" 
+            [alt]="song.title"
+            class="song-cover"
+          >
+          <div class="play-overlay">
+            <span class="play-icon">▶️</span>
+          </div>
+          <button 
+            class="favorite-btn" 
+            (click)="toggleFavorite(song, $event)"
+            [class.favorited]="isFavorite(song._id || '')"
+          >
+            <span class="favorite-icon">{{ isFavorite(song._id || '') ? '❤️' : '🤍' }}</span>
+          </button>
+        </div>
+        <div class="song-info">
+          <h3 class="song-title">{{ song.title }}</h3>
+          <p class="song-artist">{{ song.artist }}</p>
+          <p class="song-album">{{ song.album }}</p>
+          <div class="song-stats">
+            <span class="play-count">👁️ {{ song.playCount }}</span>
+            <span class="likes">❤️ {{ song.likes }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ng-template #loadingSongs>
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Chargement des chansons...</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- Recent Uploads -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">🆕 Ajouts Récents</h2>
+      <p class="section-subtitle">Les dernières chansons ajoutées à la bibliothèque</p>
+    </div>
+    <div class="songs-grid" *ngIf="recentSongs.length > 0; else loadingRecent">
+      <div 
+        *ngFor="let song of recentSongs" 
+        class="song-card"
+        (click)="playSong(song)"
+      >
+        <div class="song-cover-container">
+          <img 
+            [src]="assetService.getSongCover(song.coverImage)" 
+            [alt]="song.title"
+            class="song-cover"
+          >
+          <div class="play-overlay">
+            <span class="play-icon">▶️</span>
+          </div>
+          <button 
+            class="favorite-btn" 
+            (click)="toggleFavorite(song, $event)"
+            [class.favorited]="isFavorite(song._id || '')"
+          >
+            <span class="favorite-icon">{{ isFavorite(song._id || '') ? '❤️' : '🤍' }}</span>
+          </button>
+        </div>
+        <div class="song-info">
+          <h3 class="song-title">{{ song.title }}</h3>
+          <p class="song-artist">{{ song.artist }}</p>
+          <p class="song-album">{{ song.album }}</p>
+          <div class="song-stats">
+            <span class="upload-date">📅 {{ formatDate(song.createdAt || '') }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ng-template #loadingRecent>
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Chargement des ajouts récents...</p>
+      </div>
+    </ng-template>
+  </section>
+
+  <!-- Genres -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">🎼 Genres Musicaux</h2>
+      <p class="section-subtitle">Explorez la musique par genre</p>
+    </div>
+    <div class="genres-grid" *ngIf="genres.length > 0; else loadingGenres">
+      <div 
+        *ngFor="let genre of genres" 
+        class="genre-card"
+        (click)="exploreGenre(genre)"
+      >
+        <div class="genre-icon">🎵</div>
+        <h3 class="genre-name">{{ genre }}</h3>
+      </div>
+    </div>
+    <ng-template #loadingGenres>
+      <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Chargement des genres...</p>
+      </div>
+    </ng-template>
+  </section>
+</div> 
